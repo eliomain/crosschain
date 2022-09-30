@@ -64,6 +64,9 @@ contract BridgeTest is Test {
         address _dstAddress = address(this);
         data.addWhiteListTo(_dstAddress);
 
+
+        bytes memory sigs = bytes("");
+
         bytes32 hash = keccak256(
             abi.encodePacked(
                 _srcChainID,
@@ -74,27 +77,39 @@ contract BridgeTest is Test {
                 _payload
             )
         );
-        // 验证多签
-        bytes memory sigs = bytes("");
+
+        // 用私钥1 对hash进行签名
         (uint8 v, bytes32 r, bytes32 s) = vm.sign(pk1, hash);
+
+        // 签名者1验证
         address signer = ecrecover(hash, v, r, s);
         assertEq(signer, vm.addr(pk1));
 
-        sigs = abi.encodePacked(sigs, r, s, v);
-        (v, r, s) = vm.sign(pk2, hash);
-        sigs = abi.encodePacked(sigs, r, s, v);
-        (v, r, s) = vm.sign(pk3, hash);
-        sigs = abi.encodePacked(sigs, r, s, v);
+        // 将签名者1的密钥和空消息 进行打包
+        sigs = abi.encodePacked(sigs, r, s, v); // sigs 长度 65
 
+        // 签名者2对hash签名
+        (v, r, s) = vm.sign(pk2, hash);
+
+        // 将签名者2的密钥和bytes消息进行打包
+        sigs = abi.encodePacked(sigs, r, s, v); // sigs 长度 65 * 2
+
+        // 签名者3对hash签名
+        (v, r, s) = vm.sign(pk3, hash);
+
+        // 将签名者3的密钥和消息进行打包
+        sigs = abi.encodePacked(sigs, r, s, v); // sigs 长度 65 * 3
+
+        // bytes的长度为三个签名者
         assertEq(sigs.length, 65 * 3);
 
         logic.receivePayload(
-            _srcChainID,
-            _nonce,
-            Utils.addressToBytes(_srcAddress),
-            _dstAddress,
+            _srcChainID, // 原链id
+            _nonce, // 自增id
+            Utils.addressToBytes(_srcAddress), // 钱包地址
+            _dstAddress, // 目标地址
             _payload,
-            sigs,
+            sigs, // 签名消息
             200000
         );
     }

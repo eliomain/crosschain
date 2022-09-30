@@ -36,24 +36,25 @@ contract BridgeLogic is IBridgeLogic, Ownable, Pausable {
         );
     }
 
-    // 目标链接收验证多签
+    // 多签消息接收
     function receivePayload(
-        uint16 _srcChainID,
-        uint256 _nonce,
-        bytes calldata _srcAddress,
-        address _dstAddress,
+        uint16 _srcChainID, // 原链id
+        uint256 _nonce, // 自增id
+        bytes calldata _srcAddress, // 地址
+        address _dstAddress, // 目标地址
         bytes calldata _payload,
-        bytes calldata _sigs,
-        uint256 _gasLimit
+        bytes calldata _sigs, // 多签名消息
+        uint256 _gasLimit // 200000
     ) external override {
 
-        // 验证 目标地址 是否在白名单
+        // 验证 目标地址 (?) 是否在白名单
         require(
             IBridgeData(dataAddr).isInWhiteListTo(_dstAddress),
             "INVALID_TO"
         );
 
-        // 验证多签
+        
+        // 验证多重签名
         {
             bytes32 hash = keccak256(
                 abi.encodePacked(
