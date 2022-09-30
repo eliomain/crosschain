@@ -24,10 +24,14 @@ contract BridgeTest is Test {
         pk2 = 2;
         pk3 = 3;
 
+        // 创建三个管理员钱包地址 用于多签准备
         address[] memory keepers = new address[](3);
+        // https://book.getfoundry.sh/cheatcodes/addr
+        
         keepers[0] = address(vm.addr(pk1));
         keepers[1] = address(vm.addr(pk2));
         keepers[2] = address(vm.addr(pk3));
+
         proxy = new BridgeProxy();
         data = new BridgeData(srcChainID, address(proxy), keepers);
         logic = new BridgeLogic(address(proxy), address(data));
@@ -35,7 +39,9 @@ contract BridgeTest is Test {
     }
 
     function testSend() external {
+        // 将本合约加入白名单
         data.addWhiteListFrom(address(this));
+        // 发送入口
         logic.send(dstChainID, Utils.addressToBytes(address(0)), bytes(""));
     }
 
@@ -54,6 +60,7 @@ contract BridgeTest is Test {
         address _srcAddress,
         bytes memory _payload
     ) external {
+        // 本合约加入到白名单
         address _dstAddress = address(this);
         data.addWhiteListTo(_dstAddress);
 
@@ -67,6 +74,7 @@ contract BridgeTest is Test {
                 _payload
             )
         );
+        // 验证多签
         bytes memory sigs = bytes("");
         (uint8 v, bytes32 r, bytes32 s) = vm.sign(pk1, hash);
         address signer = ecrecover(hash, v, r, s);

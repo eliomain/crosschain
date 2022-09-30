@@ -37,10 +37,11 @@ contract BridgeProxy is Ownable, ReentrancyGuard {
         bytes calldata _payload
     ) external nonReentrant {
         require(msg.sender == logic, "INVALID_SENDER");
-
+        // Test: logic.send(dstChainID, Utils.addressToBytes(address(0)), bytes(""));
         emit Packet(sender, nonce++, _dstChainID, _destination, _payload);
     }
 
+    // 用于接收请求到的信息并通过 IReceiver 传递给接收合约处理接收
     function receivePayloadFromLogic(
         uint16 _srcChainID,
         uint256 _nonce,

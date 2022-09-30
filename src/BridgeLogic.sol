@@ -22,11 +22,12 @@ contract BridgeLogic is IBridgeLogic, Ownable, Pausable {
         bytes calldata _destination,
         bytes calldata _payload
     ) external override whenNotPaused {
+        // 验证白名单
         require(
             IBridgeData(dataAddr).isInWhiteListFrom(msg.sender),
             "INVALID_FROM"
         );
-
+        // 调取发送函数
         IBridgeProxy(proxyAddr).sendFromLogic(
             msg.sender,
             _dstChainID,
@@ -35,6 +36,7 @@ contract BridgeLogic is IBridgeLogic, Ownable, Pausable {
         );
     }
 
+    // 目标链接收验证多签
     function receivePayload(
         uint16 _srcChainID,
         uint256 _nonce,
@@ -44,11 +46,14 @@ contract BridgeLogic is IBridgeLogic, Ownable, Pausable {
         bytes calldata _sigs,
         uint256 _gasLimit
     ) external override {
+
+        // 验证 目标地址 是否在白名单
         require(
             IBridgeData(dataAddr).isInWhiteListTo(_dstAddress),
             "INVALID_TO"
         );
 
+        // 验证多签
         {
             bytes32 hash = keccak256(
                 abi.encodePacked(
@@ -68,7 +73,9 @@ contract BridgeLogic is IBridgeLogic, Ownable, Pausable {
             );
         }
 
+        // 信息录入字典并标记
         IBridgeData(dataAddr).markDoneFromLogic(_srcChainID, _nonce);
+
         IBridgeProxy(proxyAddr).receivePayloadFromLogic(
             _srcChainID,
             _nonce,
